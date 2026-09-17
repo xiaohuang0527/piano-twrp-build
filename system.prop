@@ -1,0 +1,16 @@
+#
+# Copyright (C) 2025 The OrangeFox Recovery Project
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Device properties for Xiaomi Pad 8 Pro (piano)
+#
+
+ro.product.device=piano
+ro.product.name=piano
+ro.product.model=25091RP04C
+ro.product.brand=Xiaomi
+ro.product.manufacturer=Xiaomi
+ro.product.marketname=Xiaomi Pad 8 Pro
+ro.board.platform=sun
+ro.product.first_api_level=35
