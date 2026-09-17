@@ -90,6 +90,20 @@ jobs:
           rm -rf device/xiaomi/piano/.git device/xiaomi/piano/.github
           echo "=== device tree ==="
           ls device/xiaomi/piano
+          echo "=== AndroidProducts.mk ==="
+          cat device/xiaomi/piano/AndroidProducts.mk
+
+      # ---------- lunch 自检 ----------
+      - name: Self-check lunch target
+        run: |
+          cd ~/twrp
+          export ALLOW_MISSING_DEPENDENCIES=true
+          export LC_ALL=C
+          source build/envsetup.sh > /tmp/envsetup.log 2>&1 || true
+          echo "=== lunch 前可用目标（含 piano） ==="
+          grep -ri "piano" build/make/target/product/AndroidProducts.mk 2>/dev/null || echo "(no global ref)"
+          echo "=== 尝试 lunch ==="
+          lunch twrp_piano-eng 2>&1 | tail -40
 
       # ---------- lunch + build ----------
       - name: Build recovery
@@ -97,19 +111,24 @@ jobs:
           cd ~/twrp
           export ALLOW_MISSING_DEPENDENCIES=true
           export LC_ALL=C
+          set -o pipefail
           source build/envsetup.sh
           lunch twrp_piano-eng
-          mka recoveryimage -j$(nproc --all) 2>&1 | tail -150
+          echo "=== TARGET_PRODUCT=$TARGET_PRODUCT TARGET_DEVICE=$TARGET_DEVICE ==="
+          mka recoveryimage -j$(nproc --all) 2>&1 | tee /tmp/recovery-build.log | tail -200
+        continue-on-error: true
 
       # ---------- 产物 ----------
       - name: Collect artifacts
         if: always()
         run: |
-          mkdir -p out_artifacts
-          find ~/twrp/out/target/product/piano -maxdepth 1 -type f \
+          mkdir -p "$GITHUB_WORKSPACE/out_artifacts"
+          find "$HOME/twrp/out/target/product/piano" -maxdepth 1 -type f \
             \( -name "*.img" -o -name "*.zip" \) \
-            -exec cp {} out_artifacts/ \; 2>/dev/null || true
-          ls -lh out_artifacts/ || true
+            -exec cp {} "$GITHUB_WORKSPACE/out_artifacts/" \; 2>/dev/null || true
+          ls -lh "$GITHUB_WORKSPACE/out_artifacts/" || true
+          echo "=== out/target/product/piano 内容 ==="
+          ls -lh "$HOME/twrp/out/target/product/piano/" 2>/dev/null | head -40 || true
           df -h /
 
       - name: Upload artifacts
@@ -128,7 +147,10 @@ jobs:
         with:
           name: build-log
           path: |
-            ~/twrp/out/verbose.log.gz
-            ~/twrp/out/error.log
+            /tmp/recovery-build.log
+            /tmp/envsetup.log
+            /home/runner/twrp/out/verbose.log.gz
+            /home/runner/twrp/out/error.log
+            /home/runner/twrp/out/soong.log
           if-no-files-found: ignore
           retention-days: 7
