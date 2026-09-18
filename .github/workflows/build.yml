@@ -63,13 +63,16 @@ jobs:
           git config --global user.email "ci@piano.local"
           git config --global color.ui false
 
-      # ---------- repo init: TWRP-Test AOSP, twrp-14.0 ----------
-      - name: Repo init (TWRP twrp-14.0)
+      # ---------- repo init: TWRP 官方 manifest, twrp-14 (Android 14) ----------
+      - name: Repo init (TWRP twrp-14)
         run: |
           mkdir -p ~/twrp && cd ~/twrp
           repo init --depth=1 --no-clone-bundle \
-            -u https://github.com/TWRP-Test/platform_manifest_twrp_aosp.git \
-            -b twrp-14.0 2>&1 | tail -30
+            -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git \
+            -b twrp-14 2>&1 | tail -30
+          echo "=== manifest 确认 ==="
+          ls -la .repo/manifests/ | head
+          head -20 .repo/manifests/default.xml 2>/dev/null
 
       # ---------- sync ----------
       - name: Repo sync
